@@ -8,7 +8,7 @@ import Filters from "./filters/Filters";
 import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 
-const API_KEY = "67d898e66262ad058cc7c22b";
+const API_KEY = "67d89da858deec05aa89b662";
 
 export default function Home() {
   let [searchParams] = useSearchParams();
