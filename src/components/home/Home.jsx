@@ -12,6 +12,7 @@ const API_KEY = "67d89da858deec05aa89b662";
 
 export default function Home() {
   let [searchParams] = useSearchParams();
+  const [loading, setLoading] = useState(false);
   const [hotels, setHotels] = useState([]);
   const destination = searchParams.get("destination") || "the";
   const checkin = searchParams.get("checkin") || "";
@@ -19,6 +20,7 @@ export default function Home() {
   const checkout = searchParams.get("checkout") || "";
   const [opened, { open, close }] = useDisclosure(false);
   const fetchHotels = async () => {
+    setLoading(true);
     const params = {
       api_key: API_KEY,
       name: destination,
@@ -27,18 +29,22 @@ export default function Home() {
     if (checkin) params.checkin = checkin;
     if (checkout) params.checkout = checkout;
     if (adults) params.adults = adults;
-    axios
-      .get(`https://api.makcorps.com/mapping`, { params })
-      .then((response) => {
-        setHotels(response?.data);
-      })
-      .catch((response) => {
-        console.log(response);
+
+    try {
+      const response = await axios.get("https://api.makcorps.com/mapping", {
+        params,
       });
+      setHotels(response?.data || []);
+    } catch (error) {
+      console.error(error);
+      setHotels([]);
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => {
     fetchHotels();
-  }, [destination, hotels]);
+  }, [destination, checkin, checkout, adults]);
 
   return (
     <>
@@ -59,9 +65,13 @@ export default function Home() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {hotels.length > 0 ? (
-              hotels.map((hotel) => (
+          {loading ? (
+            <p className="text-blue-500 text-center font-bold text-2xl animate-pulse">
+              Loading Hotels...
+            </p>
+          ) : hotels.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {hotels.map((hotel) => (
                 <div
                   initial={{ opacity: 0, y: 50 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -70,13 +80,13 @@ export default function Home() {
                 >
                   <HotelCard hotel={hotel} />
                 </div>
-              ))
-            ) : (
-              <p className="text-red-500 col-span-3 text-center animate-bounce font-bold text-2xl">
-                No Hotels Found
-              </p>
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-red-500 col-span-3 text-center animate-bounce font-bold text-2xl">
+              No Hotels Found
+            </p>
+          )}
         </div>
       </div>
       <Drawer opened={opened} onClose={close} title="Filters">
